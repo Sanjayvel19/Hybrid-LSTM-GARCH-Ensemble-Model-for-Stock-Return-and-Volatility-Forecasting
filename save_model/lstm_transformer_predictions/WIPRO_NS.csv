@@ -1,0 +1,2 @@
+Stock,Sector,Current_Price,LSTM_Prediction,Change_%,Signal
+WIPRO.NS,IT,257.01,166.24,-35.32,SELL

@@ -1,0 +1,2 @@
+Stock,Sector,Current_Price,LSTM_Prediction,Change_%,Signal
+GAIL.NS,ENERGY,165.47,100.81,-39.08,SELL

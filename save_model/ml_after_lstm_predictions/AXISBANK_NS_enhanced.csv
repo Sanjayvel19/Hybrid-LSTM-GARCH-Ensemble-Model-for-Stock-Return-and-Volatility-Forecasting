@@ -1,0 +1,2 @@
+Stock,Sector,Current_Price,LSTM_Prediction,ML_Prediction,ML_Change_%,Signal
+AXISBANK.NS,BANK,1246.0,709.34,1243.75,-0.18,SELL

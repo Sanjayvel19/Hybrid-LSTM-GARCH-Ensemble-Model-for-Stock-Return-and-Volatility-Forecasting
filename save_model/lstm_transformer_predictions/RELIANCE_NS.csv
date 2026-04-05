@@ -1,0 +1,2 @@
+Stock,Sector,Current_Price,LSTM_Prediction,Change_%,Signal
+RELIANCE.NS,ENERGY,1539.8,676.64,-56.06,SELL

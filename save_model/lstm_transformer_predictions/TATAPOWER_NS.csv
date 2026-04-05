@@ -1,0 +1,2 @@
+Stock,Sector,Current_Price,LSTM_Prediction,Change_%,Signal
+TATAPOWER.NS,ENERGY,374.35,183.07,-51.1,SELL

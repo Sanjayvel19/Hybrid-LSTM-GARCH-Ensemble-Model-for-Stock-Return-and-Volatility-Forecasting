@@ -1,0 +1,2 @@
+Stock,Sector,Current_Price,LSTM_Prediction,Change_%,Signal
+FEDERALBNK.NS,BANK,267.6,129.48,-51.61,SELL

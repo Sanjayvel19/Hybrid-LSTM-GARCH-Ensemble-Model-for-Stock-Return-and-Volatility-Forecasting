@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hybrid LSTM GARCH Ensemble Model for Stock Return and Volatility Forecasting”</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#f0f3f9;--surface:#fff;--surface2:#f7f9fc;--border:#dde3ee;--border2:#e8ecf4;--ink:#0f1b2d;--ink2:#3a4a60;--ink3:#7a8da8;--blue:#2563eb;--blue-bg:#eff4ff;--green:#059669;--green-bg:#ecfdf5;--red:#dc2626;--red-bg:#fff1f1;--amber:#d97706;--amber-bg:#fffbeb;--purple:#7c3aed;--purple-bg:#f3eeff;--teal:#0891b2;--teal-bg:#ecfeff;--hold:#6366f1;--hold-bg:#eef2ff}
+html{font-size:14px}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--ink);font-size:1rem;line-height:1.6;-webkit-font-smoothing:antialiased}
+.header{background:var(--surface);border-bottom:3px solid var(--border);padding:0 3rem;height:4.5rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:0 2px 8px rgba(15,27,45,.12)}
+.logo{font-size:1.5rem;font-weight:800;background:linear-gradient(135deg,var(--blue),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo-meta{font-size:.8rem;color:var(--ink3);font-weight:500;margin-left:.8rem}
+.header-right{display:flex;align-items:center;gap:1rem}
+.live-badge{display:inline-flex;align-items:center;gap:.5rem;background:var(--green-bg);border:2px solid #a7f3d0;color:var(--green);padding:.35rem .9rem;border-radius:99px;font-size:.78rem;font-weight:700}
+.live-dot{width:.55rem;height:.55rem;background:var(--green);border-radius:50%;animation:blink 1.5s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.exch-tag{font-size:.78rem;font-weight:600;color:var(--ink3);background:var(--surface2);border:2px solid var(--border);padding:.3rem .7rem;border-radius:6px;font-family:'JetBrains Mono',monospace}
+.wrap{padding:2rem 2.5rem}
+.main-tabs{display:flex;gap:.5rem;margin-bottom:1.5rem;border-bottom:3px solid var(--border);flex-wrap:wrap}
+.main-tab{padding:.7rem 1.4rem;background:transparent;border:none;font-size:.82rem;font-weight:700;color:var(--ink3);cursor:pointer;transition:all .2s;border-bottom:3px solid transparent;margin-bottom:-3px;text-transform:uppercase;font-family:'Plus Jakarta Sans',sans-serif}
+.main-tab:hover{color:var(--blue)}
+.main-tab.active{color:var(--blue);border-bottom-color:var(--blue)}
+.tab-content{display:none}
+.tab-content.active{display:block}
+.stats-row{display:grid;grid-template-columns:repeat(7,1fr);gap:.9rem;margin-bottom:1.8rem}
+.stat-card{background:var(--surface);border:2px solid var(--border);border-radius:1rem;padding:1.1rem 1.2rem;box-shadow:0 2px 8px rgba(15,27,45,.08);transition:transform .2s,box-shadow .2s;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--stat-color,var(--blue))}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(15,27,45,.15)}
+.stat-card.blue{--stat-color:var(--blue)}.stat-card.green{--stat-color:var(--green)}.stat-card.hold{--stat-color:var(--hold)}.stat-card.red{--stat-color:var(--red)}.stat-card.amber{--stat-color:var(--amber)}.stat-card.purple{--stat-color:var(--purple)}.stat-card.teal{--stat-color:var(--teal)}
+.stat-icon{font-size:1.2rem;margin-bottom:.35rem}
+.stat-val{font-family:'JetBrains Mono',monospace;font-size:1.6rem;font-weight:700;color:var(--stat-color,var(--blue));line-height:1;letter-spacing:-.5px;margin-bottom:.2rem}
+.stat-lbl{font-size:.68rem;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:.15rem}
+.stat-note{font-size:.65rem;color:var(--ink3)}
+.controls{display:flex;align-items:center;gap:.8rem;margin-bottom:1.5rem;flex-wrap:wrap}
+.ctrl-lbl{font-size:.75rem;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.8px}
+.filter-btn{padding:.45rem 1.1rem;background:var(--surface);border:2px solid var(--border);color:var(--ink2);font-weight:700;font-size:.78rem;font-family:'Plus Jakarta Sans',sans-serif;border-radius:.6rem;cursor:pointer;transition:all .18s}
+.filter-btn:hover{border-color:var(--blue);color:var(--blue)}
+.filter-btn.active{background:var(--blue);border-color:var(--blue);color:#fff;box-shadow:0 3px 8px rgba(37,99,235,.3)}
+.search-box{flex:1;min-width:200px;padding:.5rem 1.1rem;border:2px solid var(--border);border-radius:.6rem;font-size:.85rem;font-family:'Plus Jakarta Sans',sans-serif;background:var(--surface);color:var(--ink);outline:none;transition:.18s}
+.search-box:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+.btn{padding:.5rem 1.2rem;background:var(--blue);color:#fff;border:none;border-radius:.6rem;cursor:pointer;font-size:.78rem;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;transition:.2s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(37,99,235,.25)}
+.btn:disabled{opacity:.6;cursor:not-allowed;transform:none;box-shadow:none}
+.price-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;margin-bottom:2rem}
+.price-card{background:var(--surface);border:2px solid var(--border);border-radius:1rem;padding:1.4rem;box-shadow:0 2px 8px rgba(15,27,45,.08)}
+.price-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;padding-bottom:.7rem;border-bottom:2px solid var(--border)}
+.price-card-name{font-size:.9rem;font-weight:700;color:var(--ink)}
+.price-row{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.6rem;padding-bottom:.6rem;border-bottom:1px solid var(--border2);align-items:center}
+.price-row:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.price-label{font-size:.75rem;color:var(--ink3);font-weight:600}
+.price-value{font-family:'JetBrains Mono',monospace;font-size:.9rem;font-weight:700;color:var(--blue);text-align:right}
+.price-value.positive{color:var(--green)}
+.price-value.negative{color:var(--red)}
+.table-wrap{background:var(--surface);border:2px solid var(--border);border-radius:1.2rem;overflow:hidden;box-shadow:0 2px 8px rgba(15,27,45,.08);margin-bottom:3rem}
+.table-top{padding:1rem 1.8rem;border-bottom:2px solid var(--border2);display:flex;align-items:center;justify-content:space-between;background:var(--surface2);flex-wrap:wrap;gap:.8rem}
+.table-top-l{font-size:.85rem;font-weight:700;color:var(--ink2)}
+.table-hint{font-size:.72rem;color:var(--ink3)}
+.table-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+thead tr{background:var(--surface2)}
+th{padding:.9rem 1.2rem;text-align:left;font-size:.72rem;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.8px;white-space:nowrap;border-bottom:2px solid var(--border);cursor:pointer;user-select:none;transition:color .15s}
+th:hover{color:var(--blue)}
+tbody tr{border-bottom:1px solid var(--border2);transition:background .15s}
+tbody tr:last-child{border-bottom:none}
+.stock-row{cursor:pointer}
+.stock-row:hover td{background:#eef3ff}
+.stock-row.expanded td{background:#f0f5ff}
+td{padding:.85rem 1.2rem;font-size:.85rem;vertical-align:middle}
+.td-rank{font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--ink3)}
+.td-sym{font-family:'JetBrains Mono',monospace;font-size:.9rem;font-weight:600;color:var(--ink)}
+.s-pill{display:inline-block;padding:.25rem .6rem;border-radius:.45rem;font-size:.7rem;font-weight:700;letter-spacing:.5px}
+.sp-bank{background:var(--teal-bg);color:var(--teal);border:2px solid #a5f3fc}
+.sp-it{background:var(--purple-bg);color:var(--purple);border:2px solid #ddd6fe}
+.sp-energy{background:var(--amber-bg);color:var(--amber);border:2px solid #fde68a}
+.td-price{font-family:'JetBrains Mono',monospace;font-size:.8rem;font-weight:500}
+.td-chg{font-family:'JetBrains Mono',monospace;font-size:.82rem;font-weight:700}
+.tc-pos{color:var(--green)}.tc-neg{color:var(--red)}.tc-hold{color:var(--hold)}
+.sb{display:inline-flex;align-items:center;gap:.35rem;padding:.3rem .65rem;border-radius:.45rem;font-size:.72rem;font-weight:700;letter-spacing:.5px}
+.sb-buy{background:var(--green-bg);color:var(--green);border:2px solid #a7f3d0}
+.sb-sell{background:var(--red-bg);color:var(--red);border:2px solid #fecaca}
+.sb-hold{background:var(--hold-bg);color:var(--hold);border:2px solid #c7d2fe}
+.sb-src{background:var(--purple-bg);color:var(--purple);border:2px solid #ddd6fe;font-size:.65rem}
+.expand-arrow{color:var(--ink3);font-size:.75rem;transition:transform .2s;display:inline-block}
+.expand-arrow.open{transform:rotate(90deg)}
+.detail-row td{padding:0;background:#f4f7ff!important;border-bottom:2px solid var(--blue)!important}
+.detail-panel{padding:1.4rem 2rem 1.6rem;border-top:2px solid var(--blue);animation:slideDown .2s ease}
+@keyframes slideDown{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.4rem}
+@media(max-width:900px){.detail-grid{grid-template-columns:1fr}}
+.detail-heading{font-size:.72rem;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:.8rem;display:flex;align-items:center;gap:.4rem}
+.kpi-chips{display:flex;flex-wrap:wrap;gap:.5rem}
+.kpi-chip{display:flex;flex-direction:column;background:var(--blue-bg);border:1.5px solid #bfdbfe;border-radius:.6rem;padding:.45rem .85rem;min-width:90px;transition:transform .15s}
+.kpi-chip:hover{transform:translateY(-2px);box-shadow:0 3px 8px rgba(37,99,235,.15)}
+.kpi-chip--green{background:var(--green-bg);border-color:#a7f3d0}
+.kpi-chip--green:hover{box-shadow:0 3px 8px rgba(5,150,105,.15)}
+.kpi-label{font-size:.62rem;color:var(--ink3);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.15rem}
+.kpi-val{font-family:'JetBrains Mono',monospace;font-size:.9rem;font-weight:700;color:var(--ink)}
+.analysis-grid{display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-bottom:2rem}
+.analysis-grid.full{grid-template-columns:1fr}
+.chart-card{background:var(--surface);border:2px solid var(--border);border-radius:1.4rem;padding:1.8rem;box-shadow:0 2px 10px rgba(15,27,45,.08)}
+.chart-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.2rem;gap:1rem}
+.chart-head-left{}
+.chart-badge{display:inline-block;padding:.2rem .7rem;border-radius:99px;font-size:.65rem;font-weight:700;letter-spacing:.6px;text-transform:uppercase;margin-bottom:.4rem}
+.badge-blue{background:var(--blue-bg);color:var(--blue)}
+.badge-green{background:var(--green-bg);color:var(--green)}
+.badge-amber{background:var(--amber-bg);color:var(--amber)}
+.badge-purple{background:var(--purple-bg);color:var(--purple)}
+.badge-teal{background:var(--teal-bg);color:var(--teal)}
+.badge-red{background:var(--red-bg);color:var(--red)}
+.chart-title{font-size:1rem;font-weight:700;color:var(--ink);line-height:1.3}
+.chart-subtitle{font-size:.72rem;color:var(--ink3);margin-top:.2rem}
+.chart-wrapper{position:relative}
+.chart-wrapper.h300{height:300px}
+.chart-wrapper.h340{height:340px}
+.chart-wrapper.h380{height:380px}
+.chart-wrapper.h420{height:420px}
+.chart-wrapper.h460{height:460px}
+canvas{width:100%!important;height:100%!important}
+.donut-wrap{position:relative}
+.donut-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none}
+.donut-center-val{font-family:'JetBrains Mono',monospace;font-size:1.6rem;font-weight:700;color:var(--ink);line-height:1}
+.donut-center-lbl{font-size:.65rem;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.6px;margin-top:.2rem}
+.candle-legend{display:flex;flex-wrap:wrap;gap:1rem;margin-bottom:1rem}
+.cl-item{display:flex;align-items:center;gap:.4rem;font-size:.72rem;font-weight:600;color:var(--ink2)}
+.cl-box{width:.9rem;height:.9rem;border-radius:2px}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,27,45,.6);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:1.4rem;width:90%;max-width:780px;max-height:88vh;overflow-y:auto;box-shadow:0 24px 60px rgba(15,27,45,.3);animation:modalIn .25s ease}
+@keyframes modalIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+.modal-header{padding:1.6rem 2rem;border-bottom:2px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface);z-index:1}
+.modal-title{font-size:1.3rem;font-weight:800;color:var(--ink)}
+.modal-subtitle{font-size:.78rem;color:var(--ink3);margin-top:.2rem}
+.modal-close{background:var(--surface2);border:2px solid var(--border);width:2.2rem;height:2.2rem;border-radius:50%;cursor:pointer;font-size:1rem;color:var(--ink3);display:flex;align-items:center;justify-content:center;transition:.15s}
+.modal-close:hover{background:var(--red-bg);border-color:var(--red);color:var(--red)}
+.modal-body{padding:2rem}
+.modal-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:2rem}
+.modal-stat{background:var(--surface2);border:2px solid var(--border);border-radius:.8rem;padding:1rem}
+.modal-stat-label{font-size:.68rem;color:var(--ink3);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.3rem}
+.modal-stat-val{font-family:'JetBrains Mono',monospace;font-size:1.2rem;font-weight:700;color:var(--ink)}
+.modal-stat-val.positive{color:var(--green)}.modal-stat-val.negative{color:var(--red)}.modal-stat-val.hold-color{color:var(--hold)}
+.modal-section-title{font-size:.82rem;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:.8rem;margin-top:1.6rem;display:flex;align-items:center;gap:.4rem}
+.spin{width:3rem;height:3rem;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 1rem}
+@keyframes spin{to{transform:rotate(360deg)}}
+.error{color:var(--red);font-weight:700;font-size:.9rem}
+
+/* ═══════════ LOGIN PAGE ═══════════════════════════════════════════ */
+.login-page{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0f1b2d 0%,#1a2e4a 50%,#0f1b2d 100%);overflow:hidden}
+.login-page::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Cg fill='%232563eb' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}
+.login-card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(20px);border-radius:1.8rem;padding:3rem 3.5rem;width:100%;max-width:430px;box-shadow:0 32px 80px rgba(0,0,0,.5);animation:loginSlide .4s ease;position:relative;z-index:1}
+@keyframes loginSlide{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+.login-logo{font-size:2rem;font-weight:800;background:linear-gradient(135deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.3rem}
+.login-tagline{font-size:.78rem;color:rgba(255,255,255,.4);font-weight:500;margin-bottom:2.5rem;letter-spacing:.5px}
+.login-label{display:block;font-size:.7rem;font-weight:700;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.9px;margin-bottom:.45rem;margin-top:1.2rem}
+.login-input{width:100%;padding:.75rem 1.1rem;background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.1);border-radius:.7rem;color:#fff;font-size:.9rem;font-family:'Plus Jakarta Sans',sans-serif;outline:none;transition:.2s}
+.login-input:focus{border-color:#3b82f6;background:rgba(59,130,246,.12);box-shadow:0 0 0 3px rgba(59,130,246,.2)}
+.login-input::placeholder{color:rgba(255,255,255,.22)}
+.login-btn{width:100%;margin-top:1.8rem;padding:.9rem;background:linear-gradient(135deg,#2563eb,#7c3aed);border:none;border-radius:.75rem;color:#fff;font-size:.92rem;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;transition:.25s;letter-spacing:.3px}
+.login-btn:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(37,99,235,.45)}
+.login-btn:active{transform:translateY(0)}
+.login-error{margin-top:.9rem;padding:.6rem 1rem;background:rgba(220,38,38,.14);border:1.5px solid rgba(220,38,38,.3);border-radius:.55rem;color:#fca5a5;font-size:.78rem;font-weight:600;display:none}
+.login-error.show{display:block}
+.login-divider{margin:1.5rem 0 1.2rem;border:none;border-top:1px solid rgba(255,255,255,.08)}
+.login-hints-title{font-size:.63rem;font-weight:700;color:rgba(255,255,255,.28);text-transform:uppercase;letter-spacing:.9px;margin-bottom:.55rem}
+.login-hints-row{display:flex;gap:1.5rem}
+.login-hint{font-size:.72rem;color:rgba(255,255,255,.22);font-family:'JetBrains Mono',monospace}
+.lp-particles{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.lp{position:absolute;border-radius:50%;animation:lpFloat linear infinite;opacity:0}
+@keyframes lpFloat{0%{transform:translateY(100vh);opacity:0}8%{opacity:.5}92%{opacity:.3}100%{transform:translateY(-8vh);opacity:0}}
+.login-page.fade-out{animation:loginFade .4s ease forwards;pointer-events:none}
+@keyframes loginFade{to{opacity:0}}
+
+/* ═══════════ COMPARE TAB ══════════════════════════════════════════ */
+.compare-picker{background:var(--surface);border:2px solid var(--border);border-radius:1.2rem;padding:1.6rem 2rem;margin-bottom:2rem;box-shadow:0 2px 8px rgba(15,27,45,.08)}
+.compare-picker-title{font-size:.9rem;font-weight:700;color:var(--ink);margin-bottom:1rem}
+.compare-picker-row{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap}
+.cmp-select{padding:.5rem 1rem;border:2px solid var(--border);border-radius:.6rem;font-size:.82rem;font-family:'Plus Jakarta Sans',sans-serif;background:var(--surface);color:var(--ink);outline:none;cursor:pointer;transition:.18s;min-width:150px}
+.cmp-select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+.cmp-tags{display:flex;flex-wrap:wrap;gap:.4rem;flex:1}
+.cmp-tag{display:inline-flex;align-items:center;gap:.4rem;background:var(--blue-bg);border:1.5px solid #bfdbfe;border-radius:.5rem;padding:.22rem .7rem;font-size:.75rem;font-weight:700;color:var(--blue)}
+.cmp-tag-x{cursor:pointer;color:var(--ink3);font-size:.9rem;line-height:1;margin-left:.1rem;transition:.15s}
+.cmp-tag-x:hover{color:var(--red)}
+.cmp-empty{text-align:center;padding:5rem 2rem;color:var(--ink3)}
+.cmp-empty-icon{font-size:3.5rem;margin-bottom:1rem}
+.cmp-empty-text{font-size:.95rem;font-weight:600;margin-bottom:.4rem}
+.cmp-empty-sub{font-size:.78rem}
+.cmp-cards{display:grid;gap:1rem;margin-bottom:2rem}
+.cmp-cards.n2{grid-template-columns:1fr 1fr}
+.cmp-cards.n3{grid-template-columns:repeat(3,1fr)}
+.cmp-cards.n4{grid-template-columns:repeat(4,1fr)}
+.cmp-card{background:var(--surface);border:2px solid var(--border);border-radius:1.1rem;padding:1.3rem 1.4rem;box-shadow:0 2px 8px rgba(15,27,45,.08);position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s}
+.cmp-card:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(15,27,45,.13)}
+.cmp-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--cmp-clr,var(--blue))}
+.cmp-card.winner{border-color:var(--green)}
+.cmp-card.winner::before{background:var(--green)}
+.cmp-win-badge{position:absolute;top:.6rem;right:.6rem;background:var(--green);color:#fff;font-size:.6rem;font-weight:700;padding:.18rem .5rem;border-radius:.3rem;letter-spacing:.5px}
+.cmp-sym{font-size:1.1rem;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--ink);margin-bottom:.25rem}
+.cmp-meta{display:flex;align-items:center;gap:.4rem;margin-bottom:1rem;flex-wrap:wrap}
+.cmp-metrics{display:grid;grid-template-columns:1fr 1fr;gap:.45rem}
+.cmp-m{background:var(--surface2);border-radius:.5rem;padding:.5rem .7rem}
+.cmp-m-lbl{font-size:.6rem;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px}
+.cmp-m-val{font-family:'JetBrains Mono',monospace;font-size:.88rem;font-weight:700;color:var(--ink);margin-top:.1rem}
+.cmp-m-val.pos{color:var(--green)}.cmp-m-val.neg{color:var(--red)}.cmp-m-val.hld{color:var(--hold)}
+.cmp-chart-row{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:2rem}
+.cmp-chart-row.full{grid-template-columns:1fr}
+.cmp-chart-card{background:var(--surface);border:2px solid var(--border);border-radius:1.2rem;padding:1.4rem;box-shadow:0 2px 8px rgba(15,27,45,.08)}
+.cmp-chart-title{font-size:.88rem;font-weight:700;color:var(--ink);margin-bottom:1rem;display:flex;align-items:center;gap:.4rem}
+.cmp-chart-box{position:relative;height:280px}
+.cmp-tbl-wrap{background:var(--surface);border:2px solid var(--border);border-radius:1.2rem;overflow:hidden;margin-bottom:3rem;box-shadow:0 2px 8px rgba(15,27,45,.08)}
+.cmp-tbl-head{padding:.9rem 1.5rem;background:var(--surface2);border-bottom:2px solid var(--border);font-size:.85rem;font-weight:700;color:var(--ink2)}
+.cmp-tbl{width:100%;border-collapse:collapse}
+.cmp-tbl th{padding:.7rem 1rem;background:var(--surface2);font-size:.66rem;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.8px;border-bottom:2px solid var(--border);text-align:left;white-space:nowrap}
+.cmp-tbl td{padding:.65rem 1rem;font-size:.8rem;border-bottom:1px solid var(--border2);vertical-align:middle}
+.cmp-tbl tr:last-child td{border-bottom:none}
+.cmp-tbl tr:hover td{background:#f4f7ff}
+.best-cell{background:rgba(5,150,105,.09);color:var(--green);font-weight:700;border-radius:.3rem;padding:.1rem .4rem;font-family:'JetBrains Mono',monospace;font-size:.76rem}
+.mono{font-family:'JetBrains Mono',monospace;font-size:.76rem}
+@media(max-width:1600px){.stats-row{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:1200px){.stats-row{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:1000px){.stats-row{grid-template-columns:repeat(2,1fr)};.analysis-grid{grid-template-columns:1fr}}
+@media(max-width:900px){.detail-grid{grid-template-columns:1fr};.cmp-cards.n3,.cmp-cards.n4{grid-template-columns:1fr 1fr};.cmp-chart-row{grid-template-columns:1fr}}
+@media(max-width:768px){html{font-size:12px}.wrap{padding:1.5rem}.header{padding:0 1.5rem}.stats-row{grid-template-columns:1fr;gap:.7rem}.price-grid{grid-template-columns:1fr}.modal-stats{grid-template-columns:1fr 1fr}.cmp-cards{grid-template-columns:1fr!important}}
+</style>
+</head>
+<body>
+
+<!-- ════════════ LOGIN PAGE ════════════ -->
+<div class="login-page" id="loginPage">
+  <div class="lp-particles" id="lpParticles"></div>
+  <div class="login-card">
+    <div class="login-logo">e</div>
+    <div class="login-tagline">4D Analytics · NSE India · APR 2026</div>
+    <label class="login-label" for="lgUser">Username</label>
+    <input class="login-input" id="lgUser" type="text" placeholder="Enter username" autocomplete="username">
+    <label class="login-label" for="lgPass">Password</label>
+    <input class="login-input" id="lgPass" type="password" placeholder="Enter password" autocomplete="current-password">
+    <div class="login-error" id="lgError">⚠ Invalid credentials. Please try again.</div>
+    <button class="login-btn" id="lgBtn" onclick="doLogin()">Sign In →</button>
+    <hr class="login-divider">
+    <div class="login-hints-title">Demo Credentials</div>
+    <div class="login-hints-row">
+      <span class="login-hint">admin / admin123</span>
+      <span class="login-hint">analyst / pulse2026</span>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ HEADER ════════════ -->
+<header class="header">
+  <div style="display:flex;align-items:baseline;gap:.5rem">
+    <span class="logo">Hybrid LSTM GARCH Ensemble Model for Stock Return and Volatility Forecasting</span>
+    <span class="logo-meta">Analytics · MARCH 2026</span>
+  </div>
+  <div class="header-right">
+    <span class="exch-tag">NSE · INDIA</span>
+    <span id="hdrUser" style="display:none;font-size:.72rem;font-weight:600;color:var(--ink3);background:var(--surface2);border:2px solid var(--border);padding:.28rem .75rem;border-radius:6px;font-family:'JetBrains Mono',monospace"></span>
+    <span class="live-badge"><span class="live-dot"></span>LIVE · 60s</span>
+    <button id="logoutBtn" onclick="doLogout()" style="display:none;padding:.3rem .8rem;background:var(--red-bg);border:2px solid #fecaca;color:var(--red);font-size:.7rem;font-weight:700;border-radius:.5rem;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:.15s" onmouseover="this.style.background='var(--red)';this.style.color='#fff'" onmouseout="this.style.background='var(--red-bg)';this.style.color='var(--red)'">↩ Sign Out</button>
+  </div>
+</header>
+
+<!-- ════════════ MODAL ════════════ -->
+<div class="modal-overlay" id="stockModal" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="modalTitle">—</div>
+        <div class="modal-subtitle" id="modalSubtitle">—</div>
+      </div>
+      <button class="modal-close" onclick="closeModalDirect()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-stats" id="modalStats"></div>
+      <div class="modal-section-title">📌 Macro Economic Variables</div>
+      <div class="kpi-chips" id="modalMacro"></div>
+      <div class="modal-section-title">📐 KPI Indicators</div>
+      <div class="kpi-chips" id="modalKpi"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ MAIN CONTENT ════════════ -->
+<div class="wrap">
+  <div class="main-tabs">
+    <button class="main-tab active" onclick="switchMainTab(event,'dashboard')">Dashboard</button>
+    <button class="main-tab" onclick="switchMainTab(event,'analysis')">Analysis &amp; Charts</button>
+    <button class="main-tab" onclick="switchMainTab(event,'compare')">⚖ Compare Stocks</button>
+  </div>
+
+  <!-- ════════════ DASHBOARD TAB ════════════ -->
+  <div id="dashboard-tab" class="tab-content active">
+    <div class="stats-row">
+      <div class="stat-card blue">  <div class="stat-icon">📊</div><div class="stat-val" id="totalStocks">—</div><div class="stat-lbl">Total Stocks</div><div class="stat-note">in portfolio</div></div>
+      <div class="stat-card green"> <div class="stat-icon">📈</div><div class="stat-val" id="buySignals">—</div><div class="stat-lbl">Buy Signals</div><div class="stat-note">LSTM predicted</div></div>
+      <div class="stat-card hold">  <div class="stat-icon">⏸️</div><div class="stat-val" id="holdSignals">—</div><div class="stat-lbl">Hold Signals</div><div class="stat-note">within ±1.5%</div></div>
+      <div class="stat-card red">   <div class="stat-icon">📉</div><div class="stat-val" id="sellSignals">—</div><div class="stat-lbl">Sell Signals</div><div class="stat-note">LSTM predicted</div></div>
+      <div class="stat-card amber"> <div class="stat-icon">⚡</div><div class="stat-val" id="avgVolatility">—</div><div class="stat-lbl">Avg Volatility</div><div class="stat-note">GARCH %</div></div>
+      <div class="stat-card purple"><div class="stat-icon">💹</div><div class="stat-val" id="avgReturn">—</div><div class="stat-lbl">Avg Return</div><div class="stat-note">LSTM %</div></div>
+      <div class="stat-card teal">  <div class="stat-icon">🎯</div><div class="stat-val" id="winRate">—</div><div class="stat-lbl">Win Rate</div><div class="stat-note">BUY / Total</div></div>
+    </div>
+
+    <div class="price-grid" id="priceGrid"></div>
+
+    <div class="controls">
+      <span class="ctrl-lbl">Sector:</span>
+      <button class="filter-btn active" onclick="filterBySector(event,'ALL')">All</button>
+      <button class="filter-btn" onclick="filterBySector(event,'BANK')">Bank</button>
+      <button class="filter-btn" onclick="filterBySector(event,'IT')">IT</button>
+      <button class="filter-btn" onclick="filterBySector(event,'ENERGY')">Energy</button>
+      <span class="ctrl-lbl" style="margin-left:.5rem">Signal:</span>
+      <button class="filter-btn active" id="sigAll"  onclick="filterBySignal(event,'ALL')">All</button>
+      <button class="filter-btn" id="sigBuy"  onclick="filterBySignal(event,'BUY')">BUY</button>
+      <button class="filter-btn" id="sigHold" onclick="filterBySignal(event,'HOLD')">HOLD</button>
+      <button class="filter-btn" id="sigSell" onclick="filterBySignal(event,'SELL')">SELL</button>
+      <input type="text" class="search-box" id="searchBox" placeholder="Search stock…" oninput="filterStocks()">
+      <button class="btn" id="refreshBtn" onclick="forceRefresh()">↺ Refresh</button>
+    </div>
+
+    <div class="table-wrap">
+      <div class="table-top">
+        <span class="table-top-l" id="tableInfo">Loading…</span>
+        <span class="table-hint">▶ Click a row to expand Macro &amp; KPI</span>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:2.5rem"></th>
+              <th style="width:4rem">Rank</th>
+              <th>Stock</th>
+              <th>Sector</th>
+              <th>Actual ₹</th>
+              <th>LSTM ₹</th>
+              <th>Ensemble ₹</th>
+              <th>Return %</th>
+              <th>Vol %</th>
+              <th>Signal</th>
+              <th>Source</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <tr><td colspan="11" style="text-align:center;padding:3rem"><div class="spin"></div><p style="color:var(--ink3);margin-top:.8rem">Loading…</p></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════ ANALYSIS TAB ════════════ -->
+  <div id="analysis-tab" class="tab-content">
+
+    <div class="analysis-grid full" style="margin-bottom:2rem">
+      <div class="chart-card">
+        <div class="chart-head">
+          <div class="chart-head-left">
+            <div class="chart-badge badge-blue">Chart 1 · Signal Analysis</div>
+            <div class="chart-title">LSTM Return Ranking by Stock</div>
+            <div class="chart-subtitle">All stocks ranked by predicted return — green = BUY · indigo = HOLD · red = SELL</div>
+          </div>
+        </div>
+        <div class="chart-wrapper h380"><canvas id="returnRankChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="analysis-grid" style="margin-bottom:2rem">
+      <div class="chart-card">
+        <div class="chart-head">
+          <div class="chart-head-left">
+            <div class="chart-badge badge-purple">Chart 2 · Portfolio Risk</div>
+            <div class="chart-title">Risk vs Return Bubble Map</div>
+            <div class="chart-subtitle">X = GARCH Volatility · Y = LSTM Return · Bubble size = Stock Price</div>
+          </div>
+        </div>
+        <div class="chart-wrapper h340"><canvas id="riskReturnChart"></canvas></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-head">
+          <div class="chart-head-left">
+            <div class="chart-badge badge-amber">Chart 3 · Price Comparison</div>
+            <div class="chart-title">Actual vs LSTM vs Ensemble Price</div>
+            <div class="chart-subtitle">Top 8 stocks by LSTM return — grouped bar comparison</div>
+          </div>
+        </div>
+        <div class="chart-wrapper h340"><canvas id="pricePredChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="analysis-grid" style="margin-bottom:2rem">
+      <div class="chart-card">
+        <div class="chart-head">
+          <div class="chart-head-left">
+            <div class="chart-badge badge-teal">Chart 4 · Sector Intelligence</div>
+            <div class="chart-title">Sector Performance Radar</div>
+            <div class="chart-subtitle">BANK · IT · ENERGY compared across 4 dimensions</div>
+          </div>
+        </div>
+        <div class="chart-wrapper h340"><canvas id="sectorRadarChart"></canvas></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-head">
+          <div class="chart-head-left">
+            <div class="chart-badge badge-green">Chart 5 · Signal Distribution</div>
+            <div class="chart-title">BUY / HOLD / SELL Breakdown</div>
+            <div class="chart-subtitle">Portfolio-wide signal distribution with win rate</div>
+          </div>
+        </div>
+        <div class="chart-wrapper h340 donut-wrap">
+          <canvas id="signalDonutChart"></canvas>
+          <div class="donut-center" id="donutCenter">
+            <div class="donut-center-val" id="donutWinRate">—</div>
+            <div class="donut-center-lbl">Win Rate</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="analysis-grid full" style="margin-bottom:2rem">
+      <div class="chart-card">
+        <div class="chart-head">
+          <div class="chart-head-left">
+            <div class="chart-badge badge-red">Chart 6 · OHLC View</div>
+            <div class="chart-title">Candlestick — Current Price vs LSTM Prediction</div>
+            <div class="chart-subtitle">ALL stocks · Body: Current → LSTM predicted · Wick: full range including Ensemble</div>
+          </div>
+          <div class="candle-legend">
+            <div class="cl-item"><div class="cl-box" style="background:#059669"></div>BUY</div>
+            <div class="cl-item"><div class="cl-box" style="background:#6366f1"></div>HOLD</div>
+            <div class="cl-item"><div class="cl-box" style="background:#dc2626"></div>SELL</div>
+          </div>
+        </div>
+        <div class="chart-wrapper h420"><canvas id="candleChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="analysis-grid full" style="margin-bottom:2rem">
+      <div class="chart-card">
+        <div class="chart-head">
+          <div class="chart-head-left">
+            <div class="chart-badge badge-blue">Chart 7 · Timeline</div>
+            <div class="chart-title">Price Timeline — 30-Day Historical</div>
+            <div class="chart-subtitle">Top 5 stocks: Actual price vs LSTM prediction vs Ensemble forecast</div>
+          </div>
+        </div>
+        <div class="chart-wrapper h420"><canvas id="priceTimelineChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="analysis-grid" style="margin-bottom:2rem">
+      <div class="chart-card">
+        <div class="chart-head">
+          <div class="chart-head-left">
+            <div class="chart-badge badge-amber">Chart 8 · Volatility Trend</div>
+            <div class="chart-title">Sector Volatility Timeline</div>
+            <div class="chart-subtitle">30-day GARCH volatility by sector: BANK vs IT vs ENERGY</div>
+          </div>
+        </div>
+        <div class="chart-wrapper h340"><canvas id="volatilityTimelineChart"></canvas></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-head">
+          <div class="chart-head-left">
+            <div class="chart-badge badge-green">Chart 9 · Signal Evolution</div>
+            <div class="chart-title">Signal Distribution Over Time</div>
+            <div class="chart-subtitle">30-day stacked area: portfolio-wide BUY/HOLD/SELL count evolution</div>
+          </div>
+        </div>
+        <div class="chart-wrapper h340"><canvas id="signalEvolutionChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="analysis-grid full">
+      <div class="chart-card">
+        <div class="chart-head">
+          <div class="chart-head-left">
+            <div class="chart-badge badge-purple">Chart 10 · Return Distribution</div>
+            <div class="chart-title">Portfolio Return Timeline</div>
+            <div class="chart-subtitle">30-day average, max, and min LSTM returns with confidence band</div>
+          </div>
+        </div>
+        <div class="chart-wrapper h380"><canvas id="returnDistributionChart"></canvas></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ════════════ COMPARE TAB ════════════ -->
+  <div id="compare-tab" class="tab-content">
+
+    <div class="compare-picker">
+      <div class="compare-picker-title">⚖ Select Stocks to Compare <span style="font-size:.72rem;font-weight:500;color:var(--ink3)">(2 – 4 stocks)</span></div>
+      <div class="compare-picker-row">
+        <select class="cmp-select" id="cmpSelect" onchange="addCmpStock()">
+          <option value="">+ Add a stock…</option>
+        </select>
+        <div class="cmp-tags" id="cmpTags"></div>
+        <button class="btn" onclick="runCompare()" id="cmpRunBtn" disabled>Compare →</button>
+        <button class="btn" style="background:var(--surface);border:2px solid var(--border);color:var(--ink2)" onclick="clearCompare()">✕ Clear</button>
+      </div>
+    </div>
+
+    <div class="cmp-empty" id="cmpEmpty">
+      <div class="cmp-empty-icon">⚖</div>
+      <div class="cmp-empty-text">Select 2 – 4 stocks to compare</div>
+      <div class="cmp-empty-sub">Price · Return · Volatility · Signal · Macro &amp; KPI side-by-side</div>
+    </div>
+
+    <div id="cmpResults" style="display:none">
+      <div class="cmp-cards" id="cmpCards"></div>
+
+      <div class="cmp-chart-row">
+        <div class="cmp-chart-card">
+          <div class="cmp-chart-title">💰 Price Comparison (Actual / LSTM / Ensemble)</div>
+          <div class="cmp-chart-box"><canvas id="cmpPriceChart"></canvas></div>
+        </div>
+        <div class="cmp-chart-card">
+          <div class="cmp-chart-title">📊 Return &amp; Volatility</div>
+          <div class="cmp-chart-box"><canvas id="cmpRetVolChart"></canvas></div>
+        </div>
+      </div>
+
+      <div class="cmp-chart-row full">
+        <div class="cmp-chart-card">
+          <div class="cmp-chart-title">🕸 Multi-Dimension Radar</div>
+          <div class="cmp-chart-box" style="height:340px"><canvas id="cmpRadarChart"></canvas></div>
+        </div>
+      </div>
+
+      <div class="cmp-tbl-wrap">
+        <div class="cmp-tbl-head">📋 Detailed Comparison Table</div>
+        <div style="overflow-x:auto"><table class="cmp-tbl" id="cmpTable"></table></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════ SCRIPTS ════════════ -->
+</div>
+<script src="/static/chart.min.js"></script>
+<script src="/static/login.js"></script>
+<script src="/static/app.js"></script>
+<script src="/static/charts.js"></script>
+<script src="/static/compare.js"></script>
+
+</body>
+</html>
+</body>
+</html>

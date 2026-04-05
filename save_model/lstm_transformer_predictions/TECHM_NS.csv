@@ -1,0 +1,2 @@
+Stock,Sector,Current_Price,LSTM_Prediction,Change_%,Signal
+TECHM.NS,IT,1604.6,798.59,-50.23,SELL

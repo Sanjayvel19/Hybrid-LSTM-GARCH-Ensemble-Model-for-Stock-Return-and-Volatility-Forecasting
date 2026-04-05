@@ -1,0 +1,2 @@
+Stock,Sector,Current_Price,LSTM_Prediction,ML_Prediction,Ensemble_Prediction,Ensemble_Change_%,Signal
+HDFCBANK.NS,BANK,990.9,536.55,993.69,765.12,-22.79,SELL

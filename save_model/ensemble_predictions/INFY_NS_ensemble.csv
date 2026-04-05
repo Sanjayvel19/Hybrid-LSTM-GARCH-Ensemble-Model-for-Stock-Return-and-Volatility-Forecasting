@@ -1,0 +1,2 @@
+Stock,Sector,Current_Price,LSTM_Prediction,ML_Prediction,Ensemble_Prediction,Ensemble_Change_%,Signal
+INFY.NS,IT,1621.6,912.0,1608.5,1260.25,-22.28,SELL

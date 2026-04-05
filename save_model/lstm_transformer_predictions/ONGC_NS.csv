@@ -1,0 +1,2 @@
+Stock,Sector,Current_Price,LSTM_Prediction,Change_%,Signal
+ONGC.NS,ENERGY,229.28,132.49,-42.22,SELL
