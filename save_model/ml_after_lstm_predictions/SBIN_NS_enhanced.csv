@@ -1,0 +1,2 @@
+Stock,Sector,Current_Price,LSTM_Prediction,ML_Prediction,ML_Change_%,Signal
+SBIN.NS,BANK,973.45,477.22,973.76,0.03,BUY

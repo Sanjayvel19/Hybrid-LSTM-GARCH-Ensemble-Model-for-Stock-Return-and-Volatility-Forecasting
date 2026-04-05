@@ -1,0 +1,2 @@
+Stock,Sector,Current_Price,LSTM_Prediction,ML_Prediction,ML_Change_%,Signal
+INFY.NS,IT,1621.6,912.0,1608.5,-0.81,SELL

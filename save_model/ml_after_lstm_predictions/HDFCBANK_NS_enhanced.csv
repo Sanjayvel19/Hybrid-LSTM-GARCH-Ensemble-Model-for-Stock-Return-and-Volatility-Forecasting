@@ -1,0 +1,2 @@
+Stock,Sector,Current_Price,LSTM_Prediction,ML_Prediction,ML_Change_%,Signal
+HDFCBANK.NS,BANK,990.9,536.55,993.69,0.28,BUY

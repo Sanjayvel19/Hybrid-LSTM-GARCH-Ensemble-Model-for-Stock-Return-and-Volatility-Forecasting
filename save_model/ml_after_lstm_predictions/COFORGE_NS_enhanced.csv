@@ -1,0 +1,2 @@
+Stock,Sector,Current_Price,LSTM_Prediction,ML_Prediction,ML_Change_%,Signal
+COFORGE.NS,IT,1650.96,744.43,1653.56,0.16,BUY

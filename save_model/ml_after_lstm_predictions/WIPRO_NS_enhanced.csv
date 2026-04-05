@@ -1,0 +1,2 @@
+Stock,Sector,Current_Price,LSTM_Prediction,ML_Prediction,ML_Change_%,Signal
+WIPRO.NS,IT,257.01,166.24,261.23,1.64,BUY
