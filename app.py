@@ -1149,4 +1149,4 @@ if __name__ == "__main__":
     log.info("")
     
     port = int(os.environ.get("PORT", 5000))
-app.run(debug=debug_mode, port=port, host="0.0.0.0", use_reloader=False)
+    app.run(debug=debug_mode, port=port, host="0.0.0.0", use_reloader=False)
