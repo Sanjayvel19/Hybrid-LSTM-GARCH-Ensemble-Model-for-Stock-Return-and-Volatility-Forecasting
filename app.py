@@ -56,7 +56,7 @@ CORS(app)
 # ==========================================
 # CONFIGURATION
 # ==========================================
-BASE = os.environ.get("ULITICS_BASE", r"C:\Users\jack1\OneDrive\Desktop\MBA PROJECT")
+BASE = os.environ.get("ULITICS_BASE", BASE_DIR)
 SAVE = os.path.join(BASE, "save_model")
 
 PANEL_BANK_PATH       = os.environ.get("PANEL_BANK",    os.path.join(BASE, "ULITICS", "final_simple_panel_data - BANK.csv"))
